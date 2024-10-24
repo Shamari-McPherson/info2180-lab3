@@ -1,107 +1,105 @@
-// document.addEventListener('DOMContentLoaded', function() {
-//     loadBoard();
-// });
+document.addEventListener('DOMContentLoaded', initializeGame);
 
-function loadBoard(){
-        let parent = document.getElementById("board");
-        let childAmt = parent.childElementCount;
-    
-        // Add event listener to "New Game" button
-        let buttons = document.getElementsByClassName("controls");
-        buttons[0].addEventListener('click', newGameHandler);
-    
-        // Loop through each child (square) in the board
-        for(let childCnt = 0; childCnt < childAmt; childCnt++){
-            parent.children[childCnt].classList.add("square");  // Add square class
-            parent.children[childCnt].addEventListener('click', clickHandler);  // Click handler
-            parent.children[childCnt].addEventListener('mouseover', hoverHandler);  // Mouseover handler
-            parent.children[childCnt].addEventListener('mouseout', hoverHandler);  // Mouseout handler
-        }
-    return parent;   
-}
-function isEmpty(position){
-    return playerMoves[0][position] == "0" && playerMoves[1][position] == "0";
+function initializeGame() {
+    const boardElement = document.getElementById("board");
+    const totalSquares = boardElement.childElementCount;
+
+    // Add event listener to "New Game" button
+    const controlButtons = document.getElementsByClassName("controls");
+    controlButtons[0].addEventListener('click', handleNewGame);
+
+    // Loop through each square in the board
+    for (let squareIndex = 0; squareIndex < totalSquares; squareIndex++) {
+        const square = boardElement.children[squareIndex];
+        square.classList.add("square");  // Add square class
+        square.addEventListener('click', handleSquareClick);  // Click handler
+        square.addEventListener('mouseover', handleSquareHover);  // Mouseover handler
+        square.addEventListener('mouseout', handleSquareHover);  // Mouseout handler
+    }
+    return boardElement;
 }
 
-function clickHandler(event){
-    if(!win){
-        let board = loadBoard();
-        index = Array.from(board.children).indexOf(event.target);
-        if(isEmpty(index)){
-            nextMove(index);
-            moveAmount++;
-            if(moveAmount >= 5){
-                winChecker();
+function isSquareEmpty(position) {
+    return playerMoves[0][position] === "0" && playerMoves[1][position] === "0";
+}
+
+function handleSquareClick(event) {
+    if (!isGameOver) {
+        const board = initializeGame();
+        const squareIndex = Array.from(board.children).indexOf(event.target);
+        if (isSquareEmpty(squareIndex)) {
+            makeMove(squareIndex);
+            moveCount++;
+            if (moveCount >= 5) {
+                checkForWin();
             }
         }
     }
 }
 
-function nextMove(position){
-    if(currentMove == 2){
-        loadBoard().children[position].classList.add("X");
-        loadBoard().children[position].innerHTML = "X";
-        playerMoves[1] = playerMoves[1].substring(0, position) + "1" + playerMoves[1].substring(position + 1);
-        currentMove = 1;
-    }else{
-        loadBoard().children[position].classList.add("O");
-        loadBoard().children[position].innerHTML = "O";
-        playerMoves[0] = playerMoves[0].substring(0, position) + "1" + playerMoves[0].substring(position + 1);
-        currentMove = 2;
+function makeMove(position) {
+    const currentPlayer = currentMove === 2 ? "X" : "O";
+    const board = initializeGame();
+    
+    board.children[position].classList.add(currentPlayer);
+    board.children[position].innerHTML = currentPlayer;
+    
+    playerMoves[currentMove - 1] = playerMoves[currentMove - 1].substring(0, position) + "1" + playerMoves[currentMove - 1].substring(position + 1);
+    currentMove = currentMove === 2 ? 1 : 2;
+}
+
+function isHoverEvent(event) {
+    return event.type === "mouseover";
+}
+
+function handleSquareHover(event) {
+    const squareIndex = Array.from(initializeGame().children).indexOf(event.target);
+    if (isHoverEvent(event)) {
+        initializeGame().children[squareIndex].classList.add("hover");
+    } else {
+        initializeGame().children[squareIndex].classList.remove("hover");
     }
 }
 
-function isHover(event){
-    if(event.type == "mouseover"){
-        return true
-    }else if(event.type == "mouseout"){
-        return false
-    }
-}
-
-function hoverHandler(event){
-    index = Array.from(loadBoard().children).indexOf(event.target);
-    if(isHover(event)){
-        loadBoard().children[index].classList.add("hover");
-    }else{
-        loadBoard().children[index].classList.remove("hover");
-    }
-}
-
-function winChecker(){
-    for(comboCount = 0; comboCount <= winCombos.length-1; comboCount++){
-        if(playerMoves[0] == winCombos[comboCount]){
-            document.getElementById("status").classList.add("you-won");
-            document.getElementById("status").innerHTML = "Congratulations! O is the Winner!";
-            win = true;
-        }else if(playerMoves[1] == winCombos[comboCount]){
-            document.getElementById("status").classList.add("you-won");
-            document.getElementById("status").innerHTML = "Congratulations! X is the Winner!";
-            win = true;
+function checkForWin() {
+    for (let comboIndex = 0; comboIndex < winningCombinations.length; comboIndex++) {
+        if (playerMoves[0] === winningCombinations[comboIndex]) {
+            declareWinner("O");
+            return;
+        } else if (playerMoves[1] === winningCombinations[comboIndex]) {
+            declareWinner("X");
+            return;
         }
     }
 }
 
-function newGameHandler(event){
-    if(moveAmount != 0){
-        if(event){
+function declareWinner(winner) {
+    const statusElement = document.getElementById("status");
+    statusElement.classList.add("you-won");
+    statusElement.innerHTML = `Congratulations! ${winner} is the Winner!`;
+    isGameOver = true;
+}
+
+function handleNewGame(event) {
+    if (moveCount !== 0) {
+        if (event) {
             playerMoves = ["000000000", "000000000"];
-            moveAmount = 0;
-            win = false;
-            document.getElementById("status").classList.remove("you-won");
-            document.getElementById("status").innerHTML = "Move your mouse over a square and click to play an X or an O.";
+            moveCount = 0;
+            isGameOver = false;
+            const statusElement = document.getElementById("status");
+            statusElement.classList.remove("you-won");
+            statusElement.innerHTML = "Move your mouse over a square and click to play an X or an O.";
 
-            for(let count = 0; count <= loadBoard().children.length-1; count++){
-                console.log(count)
-                loadBoard().children[count].classList.remove("O");
-                loadBoard().children[count].innerHTML = "";
-                loadBoard().children[count].classList.remove("X");
+            const squares = initializeGame().children;
+            for (let squareIndex = 0; squareIndex < squares.length; squareIndex++) {
+                squares[squareIndex].classList.remove("O", "X");
+                squares[squareIndex].innerHTML = "";
             }
         }
     }
 }
 
-const winCombos = [
+const winningCombinations = [
     "111000000",
     "111100000",
     "111010000",
@@ -115,7 +113,6 @@ const winCombos = [
     "111010001",
     "111001100",
     "111001010",
-
     "000111000",
     "100111000",
     "010111000",
@@ -129,7 +126,6 @@ const winCombos = [
     "010111001",
     "001111100",
     "001111010",
-
     "000000111",
     "100000111",
     "010000111",
@@ -143,7 +139,6 @@ const winCombos = [
     "010001111",
     "001100111",
     "001010111",
-
     "100100100",
     "110100100",
     "101100100",
@@ -159,7 +154,6 @@ const winCombos = [
     "101101100",
     "101100110",
     "101100101",
-
     "010010010",
     "110010010",
     "011010010",
@@ -179,7 +173,6 @@ const winCombos = [
     "010110011",
     "010011110",
     "010011011",
-
     "001001001",
     "101001001",
     "011001001",
@@ -199,7 +192,6 @@ const winCombos = [
     "001101011",
     "001011101",
     "001011011",
-
     "100010001",
     "110010001",
     "101010001",
@@ -219,7 +211,6 @@ const winCombos = [
     "100110011",
     "100011101",
     "100011011",
-
     "001010100",
     "101010100",
     "011010100",
@@ -239,12 +230,9 @@ const winCombos = [
     "001110101",
     "001011110",
     "001011101",
-    
-    ]
+];
 
-var win = false;
-var currentMove = Math.floor(Math.random() * (2 - 1 + 1)) + 1;
-var playerMoves = ["000000000", "000000000"];
-var moveAmount = 0;
-
-window.onload = loadBoard;
+let isGameOver = false;
+let currentMove = Math.floor(Math.random() * 2) + 1;
+let playerMoves = ["000000000", "000000000"];
+let moveCount = 0;
